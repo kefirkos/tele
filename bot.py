@@ -1,4 +1,7 @@
 import os
+import http.server
+import socketserver
+import threading
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
 
@@ -83,10 +86,21 @@ async def handle_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
             "To join the Airdrop, please enter your Solana wallet address:"
         )
 
+# Prosty serwer HTTP działający w tle
+def run_http_server():
+    PORT = 8000  # Domyślny port HTTP
+    Handler = http.server.SimpleHTTPRequestHandler
+    with socketserver.TCPServer(("", PORT), Handler) as httpd:
+        print(f"Serving HTTP on port {PORT}")
+        httpd.serve_forever()
+
 # Główna funkcja
 def main():
     # Wczytanie listy Airdrop przy starcie
     load_airdrop_list()
+
+    # Uruchom serwer HTTP w tle
+    threading.Thread(target=run_http_server, daemon=True).start()
 
     # Tworzymy aplikację
     application = Application.builder().token(API_TOKEN).build()
