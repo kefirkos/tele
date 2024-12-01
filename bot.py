@@ -2,6 +2,7 @@ import os
 import http.server
 import socketserver
 import threading
+import time
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
 
@@ -102,23 +103,29 @@ def main():
     # Uruchom serwer HTTP w tle
     threading.Thread(target=run_http_server, daemon=True).start()
 
-    # Tworzymy aplikację
-    application = Application.builder().token(API_TOKEN).build()
+    while True:  # Pętla ponawiająca połączenie
+        try:
+            # Tworzymy aplikację
+            application = Application.builder().token(API_TOKEN).build()
 
-    # Dodajemy obsługę komend
-    application.add_handler(CommandHandler("start", start))
-    application.add_handler(CommandHandler("airdrop", airdrop_register))
-    application.add_handler(CommandHandler("airdrop_stats", airdrop_stats))
-    application.add_handler(CommandHandler("menu", menu))
+            # Dodajemy obsługę komend
+            application.add_handler(CommandHandler("start", start))
+            application.add_handler(CommandHandler("airdrop", airdrop_register))
+            application.add_handler(CommandHandler("airdrop_stats", airdrop_stats))
+            application.add_handler(CommandHandler("menu", menu))
 
-    # Dodajemy obsługę wiadomości użytkownika (adresy Solana)
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_wallet_address))
+            # Dodajemy obsługę wiadomości użytkownika (adresy Solana)
+            application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_wallet_address))
 
-    # Obsługa przycisków
-    application.add_handler(CommandHandler("button", handle_button))
+            # Obsługa przycisków
+            application.add_handler(CommandHandler("button", handle_button))
 
-    # Uruchamiamy bota
-    application.run_polling()
+            # Uruchamiamy bota
+            application.run_polling()
+        except Exception as e:
+            print(f"Bot disconnected due to error: {e}")
+            print("Retrying in 5 seconds...")
+            time.sleep(5)
 
 if __name__ == '__main__':
     main()
